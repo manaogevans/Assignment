@@ -1,0 +1,188 @@
+Task 4: Dual / Tripple Telco config and netflow
+
+@CUCM
+conf t
+default int fa0/0
+vlan 10
+vlan 50
+vlan 100
+exit
+int vlan 1
+no shut
+ip add 10.52.1.1 255.255.255.0
+int vlan 10
+no shut
+ip add 10.52.10.1 255.255.255.0
+int vlan 50
+no shut
+ip add 10.52.50.1 255.255.255.0
+int vlan 100
+no shut
+ip add 10.52.100.1 255.255.255.0
+end
+
+Step2: Connect and Configure DITO and PLDT
+
+
+conf t 
+int fastEthernet 0/2/0
+des PLDTbluewire
+ip add 200.0.0.52 255.255.255.0
+no shut
+end
+
+int fastEthernet 0/2/1
+des DITOblackwire
+ip add 201.0.0.52 255.255.255.0
+no shut
+end
+
+step3: ccnp needs to know how to create Floating static route
+ip route 0.0.0.0 0.0.0.0 201.0.0.1 1
+ip route 0.0.0.0 0.0.0.0 200.0.0.1 2
+do sh ip route static
+
+Step4: Create DHCP For IPPHONES:
+@CUCM:
+conf t
+ip dhcp excluded-add 10.52.100.1 10.52.100.150
+ip dhcp pool vlan100
+network 10.52.100.0 255.255.255.0
+default-router 10.52.100.1
+option 150 ip 10.52.100.1
+int range fas 0/1/2-3
+swi mode acc
+switch acc vlan 100
+end
+
+Step 5 : BASIC TELEPHONE CONFIGS:
+config t
+no telephony-service
+telephony-service
+   no auto assign
+   no auto-reg-ephone
+   max-ephones 5
+   max-dn 20
+   ip source-address 10.52.100.1 port 2000
+   create cnf-files
+ephone-dn 1
+  number 5211
+ephone-dn 2
+  number 5222
+ephone-dn 3
+  number 5233
+ephone-dn 4
+  number 5244
+ephone-dn 5
+  number 5255
+ephone-dn 6
+  number 5266
+ephone-dn 7
+  number 5277
+ephone-dn 8
+  number 5288	
+Ephone 1
+  Mac-address ccd8.c1fb.16f3
+  type 8945
+  button 1:1 2:3 3:2 4:4
+  restart
+Ephone 2
+  Mac-address 8478.aced.5847
+  type 8945
+  button 1:5 2:6 3:7 4:8
+  restart  
+end
+
+
+configure terminal
+dial-peer voice 11 Voip
+destination-pattern 11..
+session target ipv4:10.11.100.1
+codec g711ULAW
+dial-peer voice 12 Voip
+ destination-pattern 12..
+ session target ipv4:10.12.100.1
+ codec g711ULAW
+dial-peer voice 21 Voip
+ destination-pattern 21..
+ session target ipv4:10.21.100.1
+ codec g711ULAW
+dial-peer voice 22 Voip
+ destination-pattern 22..
+ session target ipv4:10.22.100.1
+ codec g711ULAW
+dial-peer voice 31 Voip
+ destination-pattern 31..
+ session target ipv4:10.31.100.1
+ codec g711ULAW
+dial-peer voice 32 Voip
+ destination-pattern 32..
+ session target ipv4:10.32.100.1
+ codec g711ULAW
+dial-peer voice 41 Voip
+ destination-pattern 41..
+ session target ipv4:10.41.100.1
+ codec g711ULAW
+dial-peer voice 42 Voip
+ destination-pattern 42..
+ session target ipv4:10.42.100.1
+ codec g711ULAW
+dial-peer voice 51 Voip
+ destination-pattern 51..
+ session target ipv4:10.51.100.1
+ codec g711ULAW
+
+
+Step5 : Route to Classmate
+router eigrp 100
+no auto-summary
+network 200.0.0.0
+network 10.0.0.0
+int vlan 50
+ip address 10.52.50.3 255.255.255.0
+int range fas 0/1/0-1
+switch mode acc
+switch access vlan 50
+end
+
+
+
+
+NETFLOW REAL WORLD DEMO.
+@CUCM:
+config t
+int fa 0/0
+ ip nbar protocol-discovery
+end
+
+
+
+
+conf t
+ip flow-export source fa 0/1/7
+ip flow-export version 5
+ip flow-export destination 10.52.1.100 2055
+int fa 0/1/7
+snmp-server community public
+end
+
+conf t
+ip domain-name rivantit.com
+usernmae admin priviledge 15 secret pass
+ip ssh version 2
+crypto key generate rsa
+--->2048
+
+ASSIGNMENT
+Monday:
+-Configure PLDT IPVPN
+Tuesday:
+-BGP LAP, Manipulate weight ,local pref , AS Path , MED
+Wednesday
+-IP SLA Practice: 
+ISP 3 preferred 
+ISP 2 Backup
+ISP 1 Last Priority
+
+Friday :
+P1 ping 8.8.8.8

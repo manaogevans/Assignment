@@ -1,0 +1,113 @@
+config t
+access-list 41 permit host 41.41.41.41
+access-list 42 permit host 42.42.42.42
+access-list 43 permit host 43.43.43.43
+route-map LP1 permit 10
+ match ip address 41
+  set local-pref 414
+route-map LP1 permit 20
+ match ip address 42
+  set local-pref 424
+route-map LP1 Deny 30
+ match ip address 43
+route-map LP1 Permit 40
+		router bgp 45
+			neighbor 45.4.5.5 route-map LP1 out
+			do clear ip bgp *
+
+
+We want to Tell ISP4, that we have:
+41.41.41.41 local pref of 411
+and
+42.42.42.42 local pref of 422
+and
+43.43.43.43 local pref of 433
+and
+45.45.45.45 must be blocked.
+
+
+route-map LP1 permit 10
+ match ip address 41
+  set local-pref 411
+route-map LP1 permit 20
+ match ip address 42
+  set local-pref 422
+route-map LP1 permit 30
+ match ip address 43
+  set local-pref 433
+route-map LP1 Permit 50
+match ip address 45
+route-map LP1 Deny 40
+
+
+
+
+have isp4:tell isp1:
+51.51.51.51 will have localpref of 51
+52.52.52.52 will have locappref of 52
+
+53.53.53.53 and 54.54.54.54 will be blocked!
+all else is normal.
+
+access-list 51 permit host 51.51.51.51
+access-list 52 permit host 52.52.52.52
+
+route-map LP1 permit 10
+ match ip address 511
+  set local-pref 51
+route-map LP1 permit 20
+ match ip address 52
+  set local-pref 52
+route-map LP1 Deny 30
+ match ip address 53 54
+!
+
+
+router bgp 45
+			 no neighbor 45.4.5.4 route-map LP1 out
+			do clear ip bgp * soft
+
+
+
+
+
+
+
+
+--------------
+	config t
+		route-map ASPATH permit 10
+			set as-path prepend 2 2 2 2 2
+			exit
+		router bgp 2
+			neighbor 207.7.7.1 route-map ASPATH OUT
+			do clear ip bgp * soft
+			end
+
+
+
+
+
+
+--------------------------
+route-map ASPATH4 permit 10
+			match ip address 42 44
+			set as-path prepend 45 45 45 45 45
+		route-map ASPATH4 permit 20
+		router bgp 45
+			neighbor 208.8.8.1 route-map ASPATH4 out
+			do clear ip bgp * soft
+			end
+
+
+
+		no route-map MEDnotISP2
+		route-map MEDnotISP2 permit 10
+			match ip address 22
+			set metric 222
+			set as-path prepend 45 45
+		route-map MEDnotISP2 permit 20
+		router bgp 45
+			neigh 208.8.8.1 route-map MEDnotISP2 out
+			do clear ip bgp * soft
+			end
